@@ -1,0 +1,78 @@
+---
+title: "DATA607 Project1"
+author: "Tony Mei"
+date: "9/19/2019"
+output: html_document
+---
+
+```{r}
+library(stringr)
+chess_data <- read.table(url("https://raw.githubusercontent.com/Sizzlo/chessratings/master/tournamentinfo.txt"), sep = ",")
+
+#ignore the first five rows of the data
+chess_data <- chess_data[c(5:nrow(chess_data)),]
+
+#extract the id of the players
+id_pattern <- "\\d{1,2}(?=\\s\\|)"
+chess_id <- unlist(str_extract_all(chess_data, id_pattern))
+chess_id
+
+#extract the player's names 
+name_pattern <- "([[:upper:]]+\\s){2,}"
+chess_names <- unlist(str_extract_all(chess_data, name_pattern))
+chess_names
+
+#extract the player's states
+state_pattern <- "([[:upper:]]){2}\\s(?=\\|)"
+chess_states <- unlist(str_extract_all(chess_data, state_pattern))
+chess_states
+
+#extract the points
+chess_points<-"(\\d\\.\\d)"
+chess_points<-unlist(str_extract_all(chess_data, chess_points))
+chess_points
+
+#extract player's preratings
+pre_ratings <- "(/ R: ([:space:]{0,2})([[:digit:]]{1,4}))"
+chess_preratings <- unlist(str_extract_all(chess_data, pre_ratings))
+chess_preratings
+
+chess_preratings2<-unlist(str_extract_all(chess_preratings, "([[:digit:]]{1,4})"))
+chess_preratings2
+
+#extract the average of opponent's preratings
+opponents_pattern <- "(\\d{1,}|[[:blank:]]{1})(?=\\|)"
+player_opponents <- unlist(str_extract_all(unlist(chess_data), opponents_pattern))
+player_opponents[player_opponents==" "]  <- NA
+opponent1 <- as.numeric(player_opponents[seq(4, length(player_opponents), 10)])
+opponent1 <- as.numeric(opponent1[seq(1, length(opponent1), 2)])
+opponent2 <- as.numeric(player_opponents[seq(5, length(player_opponents), 10)])
+opponent2 <- as.numeric(opponent2[seq(1, length(opponent2), 2)])
+opponent3 <- as.numeric(player_opponents[seq(6, length(player_opponents), 10)])
+opponent3 <- as.numeric(opponent3[seq(1, length(opponent3), 2)])
+opponent4 <- as.numeric(player_opponents[seq(7, length(player_opponents), 10)])
+opponent4 <- as.numeric(opponent4[seq(1, length(opponent4), 2)])
+opponent5 <- as.numeric(player_opponents[seq(8, length(player_opponents), 10)])
+opponent5 <- as.numeric(opponent5[seq(1, length(opponent5), 2)])
+opponent6 <- as.numeric(player_opponents[seq(9, length(player_opponents), 10)])
+opponent6 <- as.numeric(opponent6[seq(1, length(opponent6), 2)])
+opponent7 <- as.numeric(player_opponents[seq(10, length(player_opponents), 10)])
+opponent7 <- as.numeric(opponent7[seq(1, length(opponent7), 2)])
+player_opponents <- matrix(c(opponent1, opponent2, opponent3, opponent4, opponent5, opponent6, opponent7),nrow = 64, ncol = 7)
+
+#Match opponent with player's ID
+chess_avg <- 0
+chess_table <- 0
+for (i in 1:(length(chess_id)))
+{
+  chess_avg[i] <- mean(as.numeric(chess_preratings2[player_opponents[i,]]), na.rm = T)
+}
+
+#creating the table with all the data
+chess_table <- data.frame(chess_names, chess_states, chess_points, chess_preratings2, chess_avg)
+chess_table 
+
+#write table to .csv file
+write.csv(chess_table, file = "chessrankings.csv")
+```
+
